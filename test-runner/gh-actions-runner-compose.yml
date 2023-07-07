@@ -1,0 +1,20 @@
+# Install with:
+#   sudo install -m 644 gh-actions-runner-compose.yml /etc
+version: '2.3'
+services:
+  worker:
+    image: lurklab/gh-actions-runner:latest
+    environment:
+      REPO_URL: ${REPO_URL}
+      ACCESS_TOKEN: ${ACCESS_TOKEN}
+      RUNNER_SCOPE: repo
+      RUNNER_WORKDIR: /tmp/runner/work
+      LABELS: linux,x64,test
+      DISABLE_AUTO_UPDATE: 1
+      EPHEMERAL: 1
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/tmp/runner:/tmp/runner'
+      # note: a quirk of docker-in-docker is that this path
+      # needs to be the same path on host and inside the container,
+      # docker mgmt cmds run outside of docker but expect the paths from within

@@ -1,0 +1,34 @@
+# Install with:
+#   sudo install -m 644 gh-actions-runner.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable gh-actions-runner
+# Run with:
+#   sudo systemctl start gh-actions-runner
+# Stop with:
+#   sudo systemctl stop gh-actions-runner
+# See live logs with:
+#   journalctl -f -u gh-actions-runner.service --no-hostname --no-tail
+[Unit]
+Description=GitHub Actions Runner Container
+After=docker.service
+Requires=docker.service
+[Service]
+Environment="COMPOSE_FILE=/etc/gh-actions-runner-compose.yml" \
+            "ENV_FILE=/etc/gh-actions-runner.env"
+# Docker pull shouldn't take longer than 5 minutes
+TimeoutStartSec=5min
+Restart=always
+ExecStartPre=-/usr/bin/docker compose \
+                      -f $COMPOSE_FILE \
+                      --env-file $ENV_FILE \
+                      stop %N
+ExecStartPre=-/usr/bin/docker compose \
+                        -f $COMPOSE_FILE \
+                        --env-file $ENV_FILE \
+                        rm %N
+ExecStart=/usr/bin/docker compose \
+                    -f $COMPOSE_FILE \
+                    --env-file $ENV_FILE \
+                    up --scale worker=2
+[Install]
+WantedBy=multi-user.target
